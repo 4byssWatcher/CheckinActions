@@ -1,0 +1,43 @@
+name: DailyTemperatureReport
+
+on: 
+  push:
+  schedule:
+    - cron: '0 2 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: ReportTemperature
+      run: |
+        echo "new_cookie=$(python temperatureReport.py --cookie ${cookie})" >> $GITHUB_ENV
+      env: 
+        cookie: ${{ secrets.cookie_temperature }}
+    
+    - uses: gliech/create-github-secret-action@v1
+      if: ${{ env.new_cookie != env.cookie && env.new_cookie != 0 }}
+      with:
+        location: 4byssWatcher/CheckinActions
+        name: cookie_temperature
+        value: ${{ env.new_cookie }}
+        pa_token: ${{ secrets.token }}
+        
+
+    
+      
+
